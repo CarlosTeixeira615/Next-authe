@@ -1,7 +1,7 @@
 import { createContext, ReactNode, useEffect, useState } from "react";
-import { api } from "../service/api";
 import { setCookie, parseCookies, destroyCookie } from "nookies";
 import Router from "next/router";
+import { api } from "../service/setupApiClient";
 interface SignInCredentials {
   email: string;
   password: string;
@@ -68,6 +68,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         maxAge: 60 * 60 * 24 * 30, // 30 dias
         path: "/",
       });
+      console.log(refreshToken);
       setCookie(undefined, "refreshToken_next_auth", refreshToken, {
         maxAge: 60 * 60 * 24 * 30, // 30 dias
         path: "/",

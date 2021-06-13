@@ -1,6 +1,10 @@
+import { destroyCookie } from "nookies";
 import { useContext, useEffect } from "react";
 import { AuthContext } from "../context/AuthContext";
-import { api } from "../service/api";
+import { AuthTokenError } from "../errors/AuthTokenError";
+import { setupApiClient } from "../service/api";
+import { api } from "../service/setupApiClient";
+import withSSRAuth from "../utils/withSSRAuth";
 
 export default function Dashboard() {
   const { user } = useContext(AuthContext);
@@ -13,3 +17,11 @@ export default function Dashboard() {
     </div>
   );
 }
+
+export const getServerSideProps = withSSRAuth(async (ctx) => {
+  const apiClient = setupApiClient(ctx);
+
+  return {
+    props: {},
+  };
+});
