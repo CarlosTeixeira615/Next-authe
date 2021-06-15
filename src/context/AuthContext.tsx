@@ -8,7 +8,8 @@ interface SignInCredentials {
 }
 
 interface AuthContextData {
-  signIn(credentials: SignInCredentials): Promise<void>;
+  signIn: (credentials: SignInCredentials) => Promise<void>;
+  signOut: () => void;
   isAuthenticated: boolean;
   user: User;
 }
@@ -25,16 +26,34 @@ interface User {
 
 export const AuthContext = createContext({} as AuthContextData);
 
+let authChannel: BroadcastChannel;
+
 export function signOut() {
   destroyCookie(undefined, "token_next_auth");
   destroyCookie(undefined, "refreshToken_next_auth");
+  authChannel.postMessage("signOut");
   Router.push("/");
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User>();
   const [isAuthenticated] = useState(!!user);
-
+  useEffect(() => {
+    authChannel = new BroadcastChannel("auth");
+    authChannel.onmessage = (message) => {
+      switch (message.data) {
+        case "signOut":
+          signOut();
+          authChannel.close();
+          break;
+        case "sigIn":
+          window.location.replace("http://localhost:3000/dashboard");
+          break;
+        default:
+          break;
+      }
+    };
+  }, []);
   useEffect(() => {
     const { token_next_auth } = parseCookies();
     if (token_next_auth) {
@@ -82,13 +101,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
         roles,
       });
       Router.push("/dashboard");
+      // authChannel.postMessage("sigIn");
     } catch (err) {
       console.log(err.message);
     }
   }
-
   return (
-    <AuthContext.Provider value={{ signIn, isAuthenticated, user }}>
+    <AuthContext.Provider
+      value={{ signIn, signOut, isAuthenticated, user: user }}
+    >
       {children}
     </AuthContext.Provider>
   );
